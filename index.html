@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denda Cell vs zddsddf</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root { --primary: #0284c7; --secondary: #64748b; --success: #16a34a; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .app-card { width: 100%; max-width: 550px; background: white; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .content { padding: 15px; }
+
+        /* Global UI */
+        .section-title { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin: 15px 0 8px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full { grid-column: span 2; }
+        label { font-size: 11px; font-weight: 600; color: var(--secondary); margin-bottom: 4px; display: block; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; transition: 0.2s; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1); }
+
+        /* Scanner */
+        .scan-box { background: #f0f9ff; border: 2px dashed var(--primary); padding: 25px; border-radius: 12px; text-align: center; cursor: pointer; margin-bottom: 15px; }
+        .scan-box span { display: block; font-weight: bold; color: var(--primary); margin-top: 10px; }
+        #loader { display: none; background: #fffbeb; border: 1px solid #fde68a; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 13px; font-weight: bold; color: #92400e; }
+
+        /* Thermal Preview */
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        #receipt-preview { 
+            background: #fff; border: 1px solid #94a3b8; padding: 20px; margin-top: 10px;
+            font-family: 'Courier New', monospace; font-size: 13px; white-space: pre; line-height: 1.2; color: black;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05); overflow-x: auto;
+        }
+
+        .btn-print { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
+        .btn-print:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <div class="header">
+        <h2 style="margin:0">DENDA CELL</h2>
+        <small>Pulsa Paket Data & PPOB</small>
+    </div>
+
+    <div class="content">
+        <div class="section-title">Konfigurasi Pengirim (Agen)</div>
+        <div class="grid">
+            <div class="full">
+                <label>Pilih Profil Pengirim</label>
+                <select id="sel_pengirim" onchange="applySenderProfile()">
+                    <option value="">-- Pilih Akun Pengirim --</option>
+                    <option data-nama="Denda Eliyana" data-bank="DANA" data-rek="085863630006">DANA</option>
+                    <option data-nama="Denda Eliyana" data-bank="BRI" data-rek="4405XXXXXXXXXX3">BRI</option>
+                    <option data-nama="Denda Eliyana" data-bank="SEABANK" data-rek="9019XXXXXX90">SEABANK</option>
+                </select>
+            </div>
+            <div>
+                <label>Nama Pengirim</label>
+                <input type="text" id="p_nama" oninput="render()">
+            </div>
+            <div>
+                <label>Bank Pengirim</label>
+                <input type="text" id="p_bank" oninput="render()">
+            </div>
+            <div class="full">
+                <label>No. Rekening/HP Pengirim</label>
+                <input type="text" id="p_rek" oninput="render()">
+            </div>
+        </div>
+
+        <div class="section-title">Pengaturan Cetak</div>
+        <div class="grid">
+            <div>
+                <label>Ukuran Kertas</label>
+                <select id="p_size" onchange="render()">
+                    <option value="32">58mm (Mini)</option>
+                    <option value="48">80mm (Besar)</option>
+                </select>
+            </div>
+            <div>
+                <label>Biaya Admin (Rp)</label>
+                <input type="number" id="p_admin" value="5000" oninput="render()">
+            </div>
+        </div>
+
+        <div class="section-title">Scanner OCR</div>
+        <div class="scan-box" onclick="document.getElementById('fInp').click()">
+            <svg style="width:40px;height:40px;color:var(--primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Scan Struk Transaksi</span>
+            <input type="file" id="fInp" hidden accept="image/*">
+        </div>
+
+        <div id="loader">⚡ Menganalisis Data Struk... <span id="pct">0%</span></div>
+
+        <div class="section-title">Detail Transaksi (Hasil Scan)</div>
+        <div class="grid">
+            <div class="full"><label>No. Referensi (Ref No)</label><input type="text" id="res_ref" oninput="render()"></div>
+            <div><label>Nama Penerima</label><input type="text" id="res_penerima" oninput="render()"></div>
+            <div><label>Bank Tujuan</label><input type="text" id="res_bank_tujuan" oninput="render()"></div>
+            <div class="full"><label>No. Rekening Penerima</label><input type="text" id="res_rek_tujuan" oninput="render()"></div>
+            <div class="full"><label>Nominal (Rp)</label><input type="number" id="res_amt" oninput="render()"></div>
+        </div>
+
+        <div class="preview-header">
+            <span class="section-title" style="margin:0; border:none">Preview Struk Thermal</span>
+            <span id="label-size" style="font-size: 10px; background: #e2e8f0; padding: 2px 8px; border-radius: 10px; font-weight: bold;">58MM</span>
+        </div>
+        <div id="receipt-preview">Silakan pilih profil pengirim atau scan struk...</div>
+
+        <button class="btn-print" onclick="printBluetooth()">🖨️ CETAK</button>
+    </div>
+</div>
+
+<script>
+    const fInp = document.getElementById('fInp');
+    const loader = document.getElementById('loader');
+
+    // 1. Profiling Logic
+    function applySenderProfile() {
+        const sel = document.getElementById('sel_pengirim');
+        const opt = sel.options[sel.selectedIndex];
+        if (opt.value !== "") {
+            document.getElementById('p_nama').value = opt.getAttribute('data-nama');
+            document.getElementById('p_bank').value = opt.getAttribute('data-bank');
+            document.getElementById('p_rek').value = opt.getAttribute('data-rek');
+            render();
+        }
+    }
+
+    // 2. OCR Smart Parsing
+    fInp.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        loader.style.display = 'block';
+
+        try {
+            const result = await Tesseract.recognize(file, 'ind+eng', {
+                logger: m => { if(m.status === 'recognizing text') document.getElementById('pct').innerText = Math.round(m.progress * 100) + '%'; }
+            });
+            parseData(result.data.text);
+        } catch (err) { alert("OCR Error: " + err); }
+        finally { loader.style.display = 'none'; }
+    });
+
+    function parseData(text) {
+        const raw = text.toUpperCase();
+        const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+        // Cari Nominal
+        const amtMatch = raw.match(/(?:RP|TOTAL|JUMLAH|BAYAR|AMT)[\s.:]*([\d.,]{4,})/i);
+        if(amtMatch) document.getElementById('res_amt').value = amtMatch[1].replace(/[.,\s]/g, '');
+        
+        // Cari Nama Penerima & Rekening
+        lines.forEach((line, i) => {
+            if(line.includes("KE") || line.includes("PENERIMA") || line.includes("TUJUAN") || line.includes("TRANSFER KE")) {
+                document.getElementById('res_penerima').value = line.replace(/.*(KE|TUJUAN|PENERIMA)\s?[:]?/, '').trim();
+                if(document.getElementById('res_penerima').value.length < 2) document.getElementById('res_penerima').value = lines[i+1];
+            }
+            
+   // Cari No Rekening (Pola 10-16 digit)
+            const rekMatch = line.match(/\d{10,16}/);
+            if(rekMatch) {
+                if(!document.getElementById('res_rek_tujuan').value) document.getElementById('res_rek_tujuan').value = rekMatch[0];
+            }
+            
+            
+            // / Cari Ref No (Pola alfanumerik panjang)
+            const rekTujuan = line.match(/\d{10,36}/);
+            if(rekTujuan) document.getElementById('res_ref').value = rekTujuan[0];
+            
+            // Cari nama bank populer
+            const banks = ["BRI","BCA","MANDIRI","BNI","SEABANK","DANA","GOPAY","OVO","SHOPEEPAY"];
+            banks.forEach(b => {
+                if(line.includes(b)) document.getElementById('res_bank_tujuan').value = b;
+            });
+        });
+        render();
+    }
+
+    // 3. Printing Helpers
+    function justify(l, r, w) {
+        const s = w - (String(l).length + String(r).length);
+        return l + " ".repeat(s > 0 ? s : 1) + r;
+    }
+
+    function center(t, w) {
+        const p = Math.floor((w - t.length) / 2);
+        return " ".repeat(p > 0 ? p : 0) + t;
+    }
+
+    function render() {
+        const w = parseInt(document.getElementById('p_size').value);
+        document.getElementById('label-size').innerText = w == 32 ? "58MM" : "80MM";
+        
+        const adm = parseInt(document.getElementById('p_admin').value) || 0;
+        const amt = parseInt(document.getElementById('res_amt').value) || 0;
+        const hr = "-".repeat(w);
+        
+        const v = (id) => document.getElementById(id).value || "-";
+
+        let s = center("BUKTI TRANSFER DIGITAL", w) + "\n";
+        s += center(" ", w) + "\n";
+        s += hr + "\n";
+        s += justify("TANGGAL", new Date().toLocaleString('id-ID'), w) + "\n";
+        s += justify("REF NO", v('res_ref').substring(0, w-7), w) + "\n";
+        s += hr + "\n";
+        
+        s += "DARI (PENGIRIM):\n";
+        s += v('p_nama') + "\n";
+        s += v('p_bank') + " " + v('p_rek') + "\n\n";
+        
+        s += "KE (PENERIMA):\n";
+        s += v('res_penerima') + "\n";
+        s += v('res_bank_tujuan') + " " + v('res_rek_tujuan') + "\n";
+        s += hr + "\n";
+        
+        s += justify("NOMINAL", "Rp" + amt.toLocaleString('id-ID'), w) + "\n";
+        s += justify("ADMIN", "Rp" + adm.toLocaleString('id-ID'), w) + "\n";
+        s += hr + "\n";
+        s += justify("TOTAL BAYAR", "Rp" + (amt + adm).toLocaleString('id-ID'), w) + "\n";
+        s += hr + "\n";
+        s += center("TERIMA KASIH", w) + "\n";
+        s += center("BUKTI TRANSAKSI YANG SAH", w) + "\n\n\n";
+
+        document.getElementById('receipt-preview').innerText = s;
+    }
+
+    // 4. Bluetooth ESC/POS logic
+    async function printBluetooth() {
+        const txt = document.getElementById('receipt-preview').innerText;
+        if (!navigator.bluetooth) return alert("Bluetooth hanya didukung di Chrome (HTTPS/Android)");
+
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const char = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+            
+            const encoder = new TextEncoder();
+            // Init Printer (\x1B\x40) + Teks + 3 baris kosong (\x0A)
+            await char.writeValue(encoder.encode("\x1B\x40" + txt + "\x0A\x0A\x0A"));
+            alert("Sedang Mencetak...");
+        } catch (err) { alert("Gagal: " + err); }
+    }
+
+    // Initial Render
+    render();
+</script>
+</body>
+</html>
